@@ -9,9 +9,11 @@ import { percentColor } from "./lib/utils.ts";
 
 const systemInfo = await getSystemInfo();
 
-const label = chalk.gray;
-const value = chalk.white;
-const number = chalk.yellow;
+const title = chalk.bold.cyan;
+const subtitle = chalk.bold.magenta;
+const label = chalk.yellow;
+const value = chalk.green;
+const number = chalk.green;
 const divider = chalk.gray("────────────────────────────────────");
 
 async function configMenu(
@@ -59,10 +61,8 @@ async function configMenu(
 }
 async function main() {
   console.clear();
-  const title = chalk.bold.cyan("🧭 SYSTEM INFORMATION");
-  const subtitle = chalk.gray("Select a category to inspect");
-  console.log(title);
-  console.log(subtitle);
+  console.log(title("🧭 SYSTEM INFORMATION"));
+  console.log(subtitle("Select a category to inspect"));
   console.log(divider);
   const menu = await inquirer.prompt([
     {
@@ -70,12 +70,12 @@ async function main() {
       name: "menu",
       message: chalk.cyan("What do you want to check?"),
       choices: [
-        { name: chalk.yellow("🧠 CPU"), value: "cpu" },
-        { name: chalk.green("📦 RAM"), value: "ram" },
-        { name: chalk.magenta("🎮 GPU Controllers"), value: "gpu" },
-        { name: chalk.blue("🔋 Battery"), value: "battery" },
+        { name: chalk.magenta("🧠 CPU"), value: "cpu" },
+        { name: chalk.blue("📦 RAM"), value: "ram" },
+        { name: chalk.yellow("🖥️  GPU Controllers"), value: "gpu" },
+        { name: chalk.green("🔋 Battery"), value: "battery" },
         new inquirer.Separator(),
-        { name: chalk.red("⏻ Exit"), value: "exit" },
+        { name: chalk.red("💤 Exit"), value: "exit" },
       ],
     },
   ]);
@@ -93,14 +93,13 @@ async function main() {
 }
 async function cpuInfo(cpu: Systeminformation.Systeminformation.CpuData) {
   console.clear();
-  const title = chalk.bold.cyan("🧠  CPU INFORMATION");
-  console.log(title);
+  console.log(title("🧠  CPU INFORMATION"));
   console.log(divider);
   console.log(`${label("Manufacturer:")} ${value(cpu.manufacturer)}`);
   console.log(`${label("Brand:")}        ${value(cpu.brand)}`);
   console.log(`${label("Vendor:")}       ${value(cpu.vendor)}`);
   console.log(`${label("Family:")}       ${number(cpu.family)}`);
-  console.log(`${label("Model:")}        ${number(cpu.model)}`);
+  console.log(`${label("Model:")}        ${number(cpu.model || "-")}`);
   console.log(`${label("Stepping:")}     ${number(cpu.stepping)}`);
   console.log(`${label("Speed:")}        ${number(cpu.speed)} GHz`);
   console.log(divider);
@@ -110,29 +109,28 @@ async function cpuInfo(cpu: Systeminformation.Systeminformation.CpuData) {
   console.log(`${label("Efficiency cores:")}  ${number(cpu.efficiencyCores)}`);
   console.log(`${label("Processors:")}       ${number(cpu.processors)}`);
   console.log(divider);
-  console.log(chalk.bold.magenta("Cache"));
+  console.log(subtitle("Cache"));
   console.log(
-    `${label("L1d:")} ${number(cpu.cache.l1d)} KB   ` +
-      `${label("L1i:")} ${number(cpu.cache.l1i)} KB`,
+    `${label("L1d:")} ${number(cpu.cache.l1d || "-")} KB   ` +
+      `${label("L1i:")} ${number(cpu.cache.l1i || "-")} KB`,
   );
   console.log(
-    `${label("L2:")}  ${number(cpu.cache.l2)} KB   ` +
-      `${label("L3:")} ${number(cpu.cache.l3)} KB`,
+    `${label("L2:")}  ${number(cpu.cache.l2 || "-")} KB   ` +
+      `${label("L3:")} ${number(cpu.cache.l3 || "-")} KB`,
   );
   console.log(divider);
   configMenu(cpu, "cpu");
 }
 async function ramInfo(mem: Systeminformation.Systeminformation.MemData) {
   console.clear();
-  const title = chalk.bold.cyan("📦 MEMORY INFORMATION");
-  console.log(title);
+  console.log(title("📦 MEMORY INFORMATION"));
   console.log(divider);
   console.log(`${label("Total:")}      ${number(toGB(mem.total))}`);
   console.log(`${label("Used:")}       ${number(toGB(mem.used))}`);
   console.log(`${label("Free:")}       ${number(toGB(mem.free))}`);
   console.log(`${label("Available:")}  ${number(toGB(mem.available))}`);
   console.log(divider);
-  console.log(chalk.bold.magenta("Swap"));
+  console.log(subtitle("Swap"));
   console.log(`${label("Total:")}      ${number(toGB(mem.swaptotal))}`);
   console.log(`${label("Used:")}       ${number(toGB(mem.swapused))}`);
   console.log(`${label("Free:")}       ${number(toGB(mem.swapfree))}`);
@@ -143,8 +141,7 @@ async function gpuControllersInfo(
   gpu: Systeminformation.Systeminformation.GraphicsData,
 ) {
   console.clear();
-  const title = chalk.bold.cyan("🎮 GPU CONTROLLERS");
-  console.log(title);
+  console.log(title("🖥️ GPU CONTROLLERS"));
   console.log(divider);
   if (!gpu.controllers.length) {
     console.log(chalk.red("No GPU controllers detected"));
@@ -161,7 +158,7 @@ async function gpuControllersInfo(
       `${label("Driver:")}        ${value(controller.driverVersion || "—")}`,
     );
     console.log(divider);
-    console.log(chalk.bold.magenta("Memory"));
+    console.log(subtitle("Memory"));
     console.log(
       `${label("VRAM:")}          ${value(controller.vram ? toGB(controller.vram) : "—")}`,
     );
@@ -196,80 +193,86 @@ async function batteryInfo(
   battery: Systeminformation.Systeminformation.BatteryData,
 ) {
   console.clear();
-
+  console.log(title("🔋 BATTERY INFORMATION"));
+  console.log(divider);
   if (!battery.hasBattery) {
     console.log(
       chalk.bold.red("⚠️  No battery detected or data not available!"),
     );
-    return;
+    console.log(
+      `${label("Power source:")}  ${
+        battery.acConnected
+          ? chalk.green("AC adapter 🔌")
+          : chalk.yellow("Battery 🔋")
+      }`,
+    );
+  } else {
+    console.log(`${label("Type:")}         ${value(battery.type || "—")}`);
+    console.log(`${label("Model:")}        ${value(battery.model || "—")}`);
+    console.log(
+      `${label("Manufacturer:")} ${value(battery.manufacturer || "—")}`,
+    );
+    console.log(`${label("Serial:")}       ${value(battery.serial || "—")}`);
+    console.log(divider);
+    console.log(
+      `${label("Power source:")}  ${
+        battery.acConnected
+          ? chalk.green("AC adapter 🔌")
+          : chalk.yellow("Battery 🔋")
+      }`,
+    );
+    console.log(
+      `${label("Charge:")}       ${percentColor(battery.percent)(
+        `${battery.percent}%`,
+      )}`,
+    );
+    console.log(
+      `${label("Charging:")}     ${
+        battery.isCharging ? chalk.green("Yes") : chalk.gray("No")
+      }`,
+    );
+    console.log(
+      `${label("Time remaining:")} ${value(
+        minutesToTime(battery.timeRemaining),
+      )}`,
+    );
+    console.log(divider);
+    const unit = battery.capacityUnit || "";
+    console.log(subtitle("Capacity"));
+    console.log(
+      `${label("Current:")}     ${value(
+        `${battery.currentCapacity ?? "—"} ${unit}`,
+      )}`,
+    );
+    console.log(
+      `${label("Designed:")}    ${value(
+        `${battery.designedCapacity ?? "—"} ${unit}`,
+      )}`,
+    );
+    console.log(
+      `${label("Max:")}         ${value(
+        `${battery.maxCapacity ?? "—"} ${unit}`,
+      )}`,
+    );
+    console.log(`${label("Cycles:")}      ${value(battery.cycleCount ?? "—")}`);
+    console.log(divider);
+    console.log(chalk.bold.magenta("Electrical"));
+    console.log(
+      `${label("Voltage:")}     ${value(
+        battery.voltage ? `${battery.voltage} V` : "—",
+      )}`,
+    );
+    console.log(divider);
+    console.log(battery.acConnected);
   }
-
-  const title = chalk.bold.cyan("🔋 BATTERY INFORMATION");
-  console.log(title);
-  console.log(divider);
-  console.log(`${label("Type:")}         ${value(battery.type || "—")}`);
-  console.log(`${label("Model:")}        ${value(battery.model || "—")}`);
-  console.log(
-    `${label("Manufacturer:")} ${value(battery.manufacturer || "—")}`,
-  );
-  console.log(`${label("Serial:")}       ${value(battery.serial || "—")}`);
-  console.log(divider);
-  console.log(
-    `${label("Power source:")}  ${
-      battery.acConnected
-        ? chalk.green("AC adapter 🔌")
-        : chalk.yellow("Battery 🔋")
-    }`,
-  );
-  console.log(
-    `${label("Charge:")}       ${percentColor(battery.percent)(
-      `${battery.percent}%`,
-    )}`,
-  );
-  console.log(
-    `${label("Charging:")}     ${
-      battery.isCharging ? chalk.green("Yes") : chalk.gray("No")
-    }`,
-  );
-  console.log(
-    `${label("Time remaining:")} ${value(
-      minutesToTime(battery.timeRemaining),
-    )}`,
-  );
-  console.log(divider);
-  const unit = battery.capacityUnit || "";
-  console.log(chalk.bold.magenta("Capacity"));
-  console.log(
-    `${label("Current:")}     ${value(
-      `${battery.currentCapacity ?? "—"} ${unit}`,
-    )}`,
-  );
-  console.log(
-    `${label("Designed:")}    ${value(
-      `${battery.designedCapacity ?? "—"} ${unit}`,
-    )}`,
-  );
-  console.log(
-    `${label("Max:")}         ${value(
-      `${battery.maxCapacity ?? "—"} ${unit}`,
-    )}`,
-  );
-  console.log(`${label("Cycles:")}      ${value(battery.cycleCount ?? "—")}`);
-  console.log(divider);
-  console.log(chalk.bold.magenta("Electrical"));
-  console.log(
-    `${label("Voltage:")}     ${value(
-      battery.voltage ? `${battery.voltage} V` : "—",
-    )}`,
-  );
-  console.log(divider);
-  console.log(battery.acConnected);
-
   configMenu(battery, "battery");
 }
 function exit() {
   console.clear();
   console.log(chalk.green.bold("\nSee you next time 👋\n"));
-  process.exit(0);
+  setTimeout(() => {
+    console.clear();
+    process.exit(0);
+  }, 1500);
 }
 main();
