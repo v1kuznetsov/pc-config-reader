@@ -1,5 +1,13 @@
 {
+  "name": "pc-config-reader",
+  "version": "1.0.0",
   "type": "module",
+  "main": "./dist/index.js",
+  "bin": "./dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "package": "npm run build && nexe dist/index.js -o pc-config-reader --build --build-flags '-j8 --without-intl'"
+  },
   "dependencies": {
     "chalk": "^5.6.2",
     "clipboardy": "^5.1.0",
@@ -8,6 +16,7 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/node": "^25.0.10"
+    "@types/node": "^25.0.10",
+    "nexe": "^5.0.0-beta.4"
   }
 }

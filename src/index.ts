@@ -1,11 +1,11 @@
 import inquirer from "inquirer";
 import chalk from "chalk";
-import getSystemInfo from "./components/getSystemInfo.ts";
+import getSystemInfo from "./components/getSystemInfo.js";
 import clipboard from "clipboardy";
 import Systeminformation from "systeminformation";
-import { toGB, toMB } from "./lib/utils.ts";
-import { minutesToTime } from "./lib/utils.ts";
-import { percentColor } from "./lib/utils.ts";
+import { toGB, toMB } from "./lib/utils.js";
+import { minutesToTime } from "./lib/utils.js";
+import { percentColor } from "./lib/utils.js";
 
 const systemInfo = await getSystemInfo();
 
@@ -206,6 +206,7 @@ async function batteryInfo(
           : chalk.yellow("Battery 🔋")
       }`,
     );
+    console.log(divider);
   } else {
     console.log(`${label("Type:")}         ${value(battery.type || "—")}`);
     console.log(`${label("Model:")}        ${value(battery.model || "—")}`);
@@ -263,7 +264,6 @@ async function batteryInfo(
       )}`,
     );
     console.log(divider);
-    console.log(battery.acConnected);
   }
   configMenu(battery, "battery");
 }
