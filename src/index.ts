@@ -9,16 +9,16 @@ import { percentColor } from "./lib/utils.js";
 
 const systemInfo = await getSystemInfo();
 
-const title = chalk.bold.cyan;
-const subtitle = chalk.bold.magenta;
-const label = chalk.yellow;
-const value = chalk.green;
-const number = chalk.green;
+const title = chalk.bold.white;
+const subtitle = chalk.bold.blue;
+const label = chalk.gray;
+const value = chalk.white;
+const number = chalk.white;
 const divider = chalk.gray("────────────────────────────────────");
 
 async function configMenu(
   configData: any,
-  menuType: "cpu" | "ram" | "gpuControllers" | "battery",
+  menuType: "cpu" | "ram" | "gpuControllers" | "displays" | "battery",
 ) {
   const configMenu = await inquirer.prompt([
     {
@@ -51,6 +51,8 @@ async function configMenu(
         ramInfo(configData);
       } else if (menuType === "gpuControllers") {
         gpuControllersInfo(configData);
+      } else if (menuType === "displays") {
+        displaysInfo(configData);
       } else if (menuType === "battery") {
         batteryInfo(configData);
       }
@@ -72,10 +74,11 @@ async function main() {
       choices: [
         { name: chalk.magenta("🧠 CPU"), value: "cpu" },
         { name: chalk.blue("📦 RAM"), value: "ram" },
-        { name: chalk.yellow("🖥️  GPU Controllers"), value: "gpu" },
+        { name: chalk.yellow("🎮 GPU Controllers"), value: "gpu" },
+        { name: chalk.cyan("📺 Displays"), value: "displays" },
         { name: chalk.green("🔋 Battery"), value: "battery" },
         new inquirer.Separator(),
-        { name: chalk.red("💤 Exit"), value: "exit" },
+        { name: chalk.red("🚪 Exit"), value: "exit" },
       ],
     },
   ]);
@@ -84,7 +87,9 @@ async function main() {
   } else if (menu.menu === "ram") {
     ramInfo(systemInfo.mem);
   } else if (menu.menu === "gpu") {
-    gpuControllersInfo(systemInfo.graphics);
+    gpuControllersInfo(systemInfo.graphics.controllers);
+  } else if (menu.menu === "displays") {
+    displaysInfo(systemInfo.graphics.displays);
   } else if (menu.menu === "battery") {
     batteryInfo(systemInfo.battery);
   } else if (menu.menu === "exit") {
@@ -138,16 +143,16 @@ async function ramInfo(mem: Systeminformation.Systeminformation.MemData) {
   configMenu(mem, "ram");
 }
 async function gpuControllersInfo(
-  gpu: Systeminformation.Systeminformation.GraphicsData,
+  gpu: Systeminformation.Systeminformation.GraphicsControllerData[],
 ) {
   console.clear();
-  console.log(title("🖥️ GPU CONTROLLERS"));
+  console.log(title("🎮 GPU CONTROLLERS"));
   console.log(divider);
-  if (!gpu.controllers.length) {
+  if (!gpu.length) {
     console.log(chalk.red("No GPU controllers detected"));
     return;
   }
-  for (const [index, controller] of gpu.controllers.entries()) {
+  for (const [index, controller] of gpu.entries()) {
     console.log(chalk.bold.magenta(`GPU #${index + 1}`));
     console.log(
       `${label("Vendor:")}        ${value(controller.vendor || "—")}`,
@@ -182,12 +187,78 @@ async function gpuControllersInfo(
         `${label("Free:")}          ${value(toMB(controller.memoryFree))}`,
       );
     }
-    if (index < gpu.controllers.length - 1) {
+    if (index < gpu.length - 1) {
       console.log(divider);
     }
   }
   console.log(divider);
   configMenu(gpu, "gpuControllers");
+}
+async function displaysInfo(
+  displays: Systeminformation.Systeminformation.GraphicsDisplayData[],
+) {
+  console.clear();
+  console.log(title("📺 DISPLAYS"));
+  console.log(divider);
+
+  if (!displays.length) {
+    console.log(chalk.red("No displays detected"));
+    return;
+  }
+
+  for (const [index, display] of displays.entries()) {
+    console.log(chalk.bold.magenta(`Display #${index + 1}`));
+
+    console.log(`${label("Vendor:")}        ${value(display.vendor || "—")}`);
+    console.log(`${label("Model:")}         ${value(display.model || "—")}`);
+    console.log(`${label("Serial:")}        ${value(display.serial || "—")}`);
+    console.log(
+      `${label("Display ID:")}    ${value(display.displayId || "—")}`,
+    );
+
+    console.log(divider);
+    console.log(subtitle("General"));
+
+    console.log(
+      `${label("Main:")}          ${
+        display.main ? chalk.green("Yes") : chalk.gray("No")
+      }`,
+    );
+    console.log(
+      `${label("Built-in:")}      ${
+        display.builtin ? chalk.green("Yes") : chalk.gray("No")
+      }`,
+    );
+    console.log(
+      `${label("Connection:")}    ${value(display.connection || "—")}`,
+    );
+
+    console.log(divider);
+    console.log(subtitle("Resolution"));
+
+    console.log(
+      `${label("Native:")}        ${value(
+        display.resolutionX && display.resolutionY
+          ? `${display.resolutionX}×${display.resolutionY}`
+          : "—",
+      )}`,
+    );
+
+    console.log(
+      `${label("Current:")}       ${value(
+        display.currentResX && display.currentResY
+          ? `${display.currentResX}×${display.currentResY}`
+          : "—",
+      )}`,
+    );
+
+    if (index < displays.length - 1) {
+      console.log(divider);
+    }
+  }
+
+  console.log(divider);
+  configMenu(displays, "displays");
 }
 async function batteryInfo(
   battery: Systeminformation.Systeminformation.BatteryData,
@@ -257,7 +328,7 @@ async function batteryInfo(
     );
     console.log(`${label("Cycles:")}      ${value(battery.cycleCount ?? "—")}`);
     console.log(divider);
-    console.log(chalk.bold.magenta("Electrical"));
+    console.log(subtitle("Electrical"));
     console.log(
       `${label("Voltage:")}     ${value(
         battery.voltage ? `${battery.voltage} V` : "—",
@@ -273,6 +344,6 @@ function exit() {
   setTimeout(() => {
     console.clear();
     process.exit(0);
-  }, 1500);
+  }, 1000);
 }
 main();
